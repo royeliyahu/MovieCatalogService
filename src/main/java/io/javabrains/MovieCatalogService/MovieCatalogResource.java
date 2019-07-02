@@ -13,11 +13,15 @@ public class MovieCatalogResource {
 
     @RequestMapping("/{userId}")
     public List<CatalogItem> getCatalog(@PathVariable String userId){
+
+        // get all rated movie ids
+
+        //for each movie id call movie info service and get details
+
+
+        //put them all together
         return Collections.singletonList(
                 new CatalogItem("Transformers", "test", 4)
         );
     }
-
-    //vsdvsqsqs
-
 }

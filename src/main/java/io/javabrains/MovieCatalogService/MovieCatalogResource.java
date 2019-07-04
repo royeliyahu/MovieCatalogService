@@ -28,9 +28,10 @@ public class MovieCatalogResource {
                 new Rating("12", 5),
                 new Rating("14", 1));
 
-        return raings.stream().map(rating -> {
-            Movie movie = restTemplate.getForObject("http://localhost:8081/movies/" + rating.getMovieId(), Movie.class);
-            return new CatalogItem(movie.getName(), "test", 4);
+        return raings.stream().map(rat -> {
+            Movie movie = restTemplate.getForObject("http://localhost:8081/movies/" + rat.getMovieId(), Movie.class);
+            Rating rating = restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
+            return new CatalogItem(movie.getName(), "test", rating.getRating());
         }).collect(Collectors.toList());
         //for each movie id call movie info service and get details
 

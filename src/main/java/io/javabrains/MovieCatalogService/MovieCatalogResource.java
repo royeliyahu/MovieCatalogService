@@ -1,5 +1,6 @@
 package io.javabrains.MovieCatalogService;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,10 +16,12 @@ import java.util.stream.Collectors;
 @RequestMapping("/catalog")
 public class MovieCatalogResource {
 
+    @Autowired
+    RestTemplate restTemplate;
+
     @RequestMapping("/{userId}")
     public List<CatalogItem> getCatalog(@PathVariable String userId){
 
-        RestTemplate restTemplate = new RestTemplate();
         // get all rated movie ids
         List<Rating> raings = Arrays.asList(
                 new Rating("1234", 4),
@@ -26,7 +29,7 @@ public class MovieCatalogResource {
                 new Rating("14", 1));
 
         return raings.stream().map(rating -> {
-            Movie movie = restTemplate.getForObject("http://localhost:8081/movies/56" + rating.getMovieId(), Movie.class);
+            Movie movie = restTemplate.getForObject("http://localhost:8081/movies/" + rating.getMovieId(), Movie.class);
             return new CatalogItem(movie.getName(), "test", 4);
         }).collect(Collectors.toList());
         //for each movie id call movie info service and get details

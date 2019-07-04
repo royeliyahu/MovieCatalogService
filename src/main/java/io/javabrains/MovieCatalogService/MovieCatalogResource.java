@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class MovieCatalogResource {
 
     @Autowired
-    // allowa sync call old way
+    // allowa sync call old way.   a thread save object
     private RestTemplate restTemplate;
     @Autowired
     // allowas an async calls  new way
@@ -29,13 +29,10 @@ public class MovieCatalogResource {
     public List<CatalogItem> getCatalog(@PathVariable String userId){
 
         WebClient.Builder builder = WebClient.builder();
+        UserRating userRating = restTemplate.getForObject("http://localhost:8083/ratingdata/users/" + userId, UserRating.class);
         // get all rated movie ids
-        List<Rating> raings = Arrays.asList(
-                new Rating("1234", 4),
-                new Rating("12", 5),
-                new Rating("14", 1));
 
-        return raings.stream().map(rat -> {
+        return userRating.getUserRatings().stream().map(rat -> {
             //a sync call  using RestTemplate an old way of doing
             Movie movie = restTemplate.getForObject("http://localhost:8081/movies/" + rat.getMovieId(), Movie.class);
 
@@ -46,11 +43,11 @@ public class MovieCatalogResource {
                     .uri("http://localhost:8083/ratingdata/" + rat.getMovieId())
                     .retrieve()//get the data
                     .bodyToMono(Rating.class)//its an async call
-                    .block();//waite until data will be fulfiled
+                    .block();//waite until data will be fulfiled an async call, WO it it was a sync call
                     restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
 
 
-            return new CatalogItem(movie.getName(), "test", rating.getRating());
+            return new CatalogItem(movie.getName(), "test description: " + movie.getName() + " " + rating.getRating(), rating.getRating());
         }).collect(Collectors.toList());
         //for each movie id call movie info service and get details
 

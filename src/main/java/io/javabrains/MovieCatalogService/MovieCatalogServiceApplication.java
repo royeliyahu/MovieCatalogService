@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class MovieCatalogServiceApplication {
 
 	@Bean
+//    @LoadBalanced //the URL I send you is a hint, look it up in Eureka
 	public RestTemplate getRestTemplate(){
 		return new RestTemplate();
 	}

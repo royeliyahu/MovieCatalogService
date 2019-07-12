@@ -29,22 +29,27 @@ public class MovieCatalogResource {
     public List<CatalogItem> getCatalog(@PathVariable String userId){
 
         WebClient.Builder builder = WebClient.builder();
-        UserRating userRating = restTemplate.getForObject("http://localhost:8083/ratingdata/users/" + userId, UserRating.class);
+//        UserRating userRating = restTemplate.getForObject("http://localhost:8083/ratingdata/users/" + userId, UserRating.class);
+        //using Eureka
+        UserRating userRating = restTemplate.getForObject("http://rating/ratingdata/users/" + userId, UserRating.class);
         // get all rated movie ids
 
         return userRating.getUserRatings().stream().map(rat -> {
             //a sync call  using RestTemplate an old way of doing
-            Movie movie = restTemplate.getForObject("http://localhost:8081/movies/" + rat.getMovieId(), Movie.class);
+//            Movie movie = restTemplate.getForObject("http://localhost:8081/movies/" + rat.getMovieId(), Movie.class);
+            //using Eureka
+            Movie movie = restTemplate.getForObject("http://info/movies/" + rat.getMovieId(), Movie.class);
 
 //            Rating rating = restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
             //an async call using WebClient new way of doing
             Rating rating = webClientBuilder.build()
                     .get()//use get method (post, update...)
-                    .uri("http://localhost:8083/ratingdata/" + rat.getMovieId())
+                    .uri("http://localhost:8083/ratingdata/" + rat.getMovieId())//not using Eureka
                     .retrieve()//get the data
                     .bodyToMono(Rating.class)//its an async call
                     .block();//waite until data will be fulfiled an async call, WO it it was a sync call
-                    restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
+//            restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
+            restTemplate.getForObject("http://rating/ratingdata/" + rat.getMovieId(), Rating.class);
 
 
             return new CatalogItem(movie.getName(), "test description: " + movie.getName() + " " + rating.getRating(), rating.getRating());

@@ -1,5 +1,7 @@
 package io.javabrains.MovieCatalogService;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.ribbon.proxy.annotation.Hystrix;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientCodecCustomizer;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +28,7 @@ public class MovieCatalogResource {
     private WebClient.Builder webClientBuilder;
 
     @RequestMapping("/{userId}")
+    @HystrixCommand(fallbackMethod = "getFallbackCatalog")
     public List<CatalogItem> getCatalog(@PathVariable String userId){
 
         WebClient.Builder builder = WebClient.builder();
@@ -62,4 +65,9 @@ public class MovieCatalogResource {
 //                new CatalogItem("Transformers", "test", 4)
 //        );
     }
+
+    public List<CatalogItem> getFallbackCatalog(@PathVariable String userId){
+        return Arrays.asList(new CatalogItem("no Movie","",0));
+    }
+
 }

@@ -34,28 +34,14 @@ public class MovieCatalogResource {
         WebClient.Builder builder = WebClient.builder();
 //        UserRating userRating = restTemplate.getForObject("http://localhost:8083/ratingdata/users/" + userId, UserRating.class);
         //using Eureka
-        UserRating userRating = restTemplate.getForObject("http://rating/ratingdata/users/" + userId, UserRating.class);
+        UserRating userRating = getUserRating(userId);
         // get all rated movie ids
 
         return userRating.getUserRatings().stream().map(rat -> {
             //a sync call  using RestTemplate an old way of doing
 //            Movie movie = restTemplate.getForObject("http://localhost:8081/movies/" + rat.getMovieId(), Movie.class);
             //using Eureka
-            Movie movie = restTemplate.getForObject("http://info/movies/" + rat.getMovieId(), Movie.class);
-
-//            Rating rating = restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
-            //an async call using WebClient new way of doing
-            Rating rating = webClientBuilder.build()
-                    .get()//use get method (post, update...)
-                    .uri("http://localhost:8083/ratingdata/" + rat.getMovieId())//not using Eureka
-                    .retrieve()//get the data
-                    .bodyToMono(Rating.class)//its an async call
-                    .block();//waite until data will be fulfiled an async call, WO it it was a sync call
-//            restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
-            restTemplate.getForObject("http://rating/ratingdata/" + rat.getMovieId(), Rating.class);
-
-
-            return new CatalogItem(movie.getName(), "test description: " + movie.getName() + " " + rating.getRating(), rating.getRating());
+            return getCatalogItem(rat);
         }).collect(Collectors.toList());
         //for each movie id call movie info service and get details
 
@@ -66,7 +52,42 @@ public class MovieCatalogResource {
 //        );
     }
 
-    public List<CatalogItem> getFallbackCatalog(@PathVariable String userId){
+    @HystrixCommand(fallbackMethod = "getFallbackCatalogItem")
+    private CatalogItem getCatalogItem(Rating rat) {
+        Movie movie = restTemplate.getForObject("http://info/movies/" + rat.getMovieId(), Movie.class);
+
+//            Rating rating = restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
+        //an async call using WebClient new way of doing
+        Rating rating = webClientBuilder.build()
+                .get()//use get method (post, update...)
+                .uri("http://localhost:8083/ratingdata/" + rat.getMovieId())//not using Eureka
+                .retrieve()//get the data
+                .bodyToMono(Rating.class)//its an async call
+                .block();//waite until data will be fulfiled an async call, WO it it was a sync call
+//            restTemplate.getForObject("http://localhost:8083/ratingdata/" + rat.getMovieId(), Rating.class);
+        restTemplate.getForObject("http://rating/ratingdata/" + rat.getMovieId(), Rating.class);
+
+
+        return new CatalogItem(movie.getName(), "test description: " + movie.getName() + " " + rating.getRating(), rating.getRating());
+    }
+
+    private CatalogItem getFallbackCatalogItem(Rating rat) {
+        return new CatalogItem("Movie not found", "test description: " + rat.getMovieId() + " " + rat.getRating(), rat.getRating());
+    }
+
+    @HystrixCommand(fallbackMethod = "getFallbackUserRating")
+    private UserRating getUserRating(@PathVariable String userId) {
+        return restTemplate.getForObject("http://rating/ratingdata/users/" + userId, UserRating.class);
+    }
+
+    private UserRating getFallbackUserRating(@PathVariable String userId) {
+        UserRating userRating = new UserRating();
+        userRating.setUserRatings(Arrays.asList( new Rating("0", 0)));
+        return userRating;
+    }
+
+
+        public List<CatalogItem> getFallbackCatalog(@PathVariable String userId){
         return Arrays.asList(new CatalogItem("no Movie","",0));
     }
 

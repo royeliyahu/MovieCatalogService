@@ -1,6 +1,7 @@
 package io.javabrains.MovieCatalogService;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import com.netflix.ribbon.proxy.annotation.Hystrix;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientCodecCustomizer;
@@ -28,7 +29,13 @@ public class MovieCatalogResource {
     private WebClient.Builder webClientBuilder;
 
     @RequestMapping("/{userId}")
-    @HystrixCommand(fallbackMethod = "getFallbackCatalog")
+    @HystrixCommand(fallbackMethod = "getFallbackCatalog",
+    commandProperties = {
+            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000"),//
+            @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "5"),
+            @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50"),
+            @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "5000")
+    })
     public List<CatalogItem> getCatalog(@PathVariable String userId){
 
         WebClient.Builder builder = WebClient.builder();

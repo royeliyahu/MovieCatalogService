@@ -31,7 +31,7 @@ public class MovieCatalogResource {
     @RequestMapping("/{userId}")
     @HystrixCommand(fallbackMethod = "getFallbackCatalog",
     commandProperties = {
-            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000"),//
+            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000"),
             @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "5"),
             @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50"),
             @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "5000")
@@ -59,7 +59,17 @@ public class MovieCatalogResource {
 //        );
     }
 
-    @HystrixCommand(fallbackMethod = "getFallbackCatalogItem")
+    @HystrixCommand(fallbackMethod = "getFallbackCatalogItem",
+            commandProperties = {
+                    @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000"),
+                    @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "5"),
+                    @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50"),
+                    @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "5000")
+            },threadPoolKey = "CatalogItem",
+            threadPoolProperties = {
+                    @HystrixProperty(name = "coreSize", value = "20"),
+                    @HystrixProperty(name = "maxQueueSize", value = "10")
+            })
     private CatalogItem getCatalogItem(Rating rat) {
         Movie movie = restTemplate.getForObject("http://info/movies/" + rat.getMovieId(), Movie.class);
 
@@ -82,7 +92,17 @@ public class MovieCatalogResource {
         return new CatalogItem("Movie not found", "test description: " + rat.getMovieId() + " " + rat.getRating(), rat.getRating());
     }
 
-    @HystrixCommand(fallbackMethod = "getFallbackUserRating")
+    @HystrixCommand(fallbackMethod = "getFallbackUserRating",
+            commandProperties = {
+                    @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000"),
+                    @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "5"),
+                    @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50"),
+                    @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "5000")
+            },threadPoolKey = "UserRating",
+    threadPoolProperties = {
+            @HystrixProperty(name = "coreSize", value = "20"),
+            @HystrixProperty(name = "maxQueueSize", value = "10")
+    })
     private UserRating getUserRating(@PathVariable String userId) {
         return restTemplate.getForObject("http://rating/ratingdata/users/" + userId, UserRating.class);
     }
